@@ -1,0 +1,3 @@
+coinbase:
+  base_url: https://api.exchange.coinbase.com/products/
+  url_comp: /candles
