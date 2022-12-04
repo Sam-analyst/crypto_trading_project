@@ -4,12 +4,51 @@ import pandas as pd
 
 
 def get_valid_exchanges() -> list:
+    '''
+    A function that returns a list of crypto exchanges that are supported by this code.
+    In other words, you can pull trading data for only the exchanges that are in this list.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    A list of supported exchanges
+
+    Examples
+    --------
+    >>> get_valid_exchanges()
+    ['coinbase']
+    '''
+
     valid_exchanges = read_config().keys()
+
     return list(valid_exchanges)
 
 
 def get_ticker_ids(exchange: str) -> list:
-    exchange = exchange.lower()
+    '''
+    A function that returns a list of tickers that are available for a given exchange.
+    In other words, you'll only be able to pull data for the tickers in this list for
+    the given exchange.
+
+    Parameters
+    ----------
+    exchange : str
+        The name of the crypto exchange to get tickers for
+
+    Returns
+    -------
+    A list of tickers for the given exchange
+
+    Examples
+    --------
+    >>> get_ticker_ids('coinbase')
+    ['1INCH-BTC', '1INCH-EUR', '1INCH-GBP', '1INCH-USD', ...]
+    '''
+
+    exchange = exchange.lower() #TODO need to add a type check before this so produced error is helpful
 
     if not validate_exchange(exchange):
         raise ValueError('Please provide a valid crypto exchange')
@@ -22,13 +61,31 @@ def get_ticker_ids(exchange: str) -> list:
 
 
 class Trades:
+    '''
+    A class for pulling crypto trading data and running backtesting strategies.
+
+    Parameters
+    ----------
+    exchange : str
+        The name of the crypto exchange to get data for
+
+    Returns
+    -------
+    **Attributes**
+    exchange : str
+        The name of the crypto exchange to get data for
+
+    Examples
+    --------
+    >>> trades = Trades('coinbase')
+    '''
 
     def __init__(self,
         exchange: str,
         ticker_id: str) -> None:
 
-        exchange = exchange.lower()
-        ticker_id = ticker_id.upper()
+        exchange = exchange.lower() #TODO move the .lower() method to utils
+        ticker_id = ticker_id.upper() #TODO move the ticker_id parameter to the get_data method
 
         if not validate_exchange(exchange):
             raise ValueError('Please provide a valid crypto exchange. Run get_valid_exchanges() for a full list of exchanges')
@@ -45,6 +102,45 @@ class Trades:
         start_time: str = '00:00:00',
         end_time: str = '23:59:59',
         time_interval: str = '1_day') -> pd.DataFrame:
+        '''
+        A method that returns a pandas dataframe with trading data from the exchange.
+
+        Columns include time, low, high, open, close, and volume.
+        Volume is expressed as the number of coins traded.
+
+        Parameters
+        ----------
+        start_date: str
+            The start date for the trading data provided as 'YYYY-MM-DD'
+        end_date: str
+            The end date (inclusive) for the trading data provided as 'YYYY-MM-DD'
+        start_time: str
+            The start time for the trading data provided as 'HH:MM:SS'.
+            Default is '00:00:00' and is only needed when specifying
+            time intervals less than 1 day.
+        end_time: str
+            The end time for the trading data provided as 'HH:MM:SS'.
+            Default is '23:59:59' and is only needed when specifying
+            time intervals less than 1 day.
+        time_interval: str
+            The time interval for the trading data. Valid arguments include:
+            '1_minute', '5_minute', '15_minute', '1_hour', '6_hour', '1_day'.
+
+        Returns
+        -------
+        A pandas dataframe with trading data.
+
+        Examples
+        --------
+        >>> trades = Trades('coinbase', 'BTC-USD')
+        >>> trades.get_data('2022-10-01', '2022-10-03')
+            time	low	high	open	close	volume
+        0	2022-10-01	19160.00	19486.43	19423.57	19315.27	7337.455956
+        1	2022-10-02	18923.81	19398.94	19315.26	19059.17	12951.424045
+        2	2022-10-03	18958.29	19717.67	19059.10	19633.46	28571.640187
+        '''
+
+        #TODO need to provide support for indicators. It will ideally get added to this function since we want to pull the data once
 
         if not type(time_interval) is str:
             raise TypeError("Please provide a string to time_interval")
@@ -69,7 +165,7 @@ class Trades:
             raise KeyError(msg + str(list(time_intervals.keys())))
 
         base_url = get_base_url(self.exchange)
-        data_url = base_url + self.ticker + '/candles'
+        data_url = base_url + self.ticker + '/candles' #TODO need to obtain the url suffix from the config
 
         headers = {"accept": "application/json"}
         
@@ -84,7 +180,7 @@ class Trades:
         df = pd.DataFrame(data=response.json(), columns=['time', 'low', 'high', 'open', 'close', 'volume'])
 
         # converting unix time to datetime
-        df['time'] = pd.to_datetime(df['time'], unit='s')
+        df['time'] = pd.to_datetime(df['time'], unit='s') #TODO need to conver to local time of the user
 
         # sorting by time
         df.sort_values(by=['time'], inplace=True, ignore_index=True)
