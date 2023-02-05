@@ -14,8 +14,9 @@ def read_config() -> dict:
 
 def validate_exchange(exchange: str) -> bool:
     '''
-    A function that determines if the given exchange is one of the supported
-    exchanges in this code.
+    A function that determines if the provided exchange is one of 
+    the supported exchanges in this code. If so, it returns the
+    exchange in the proper format.
 
     Parameters
     ----------
@@ -24,15 +25,12 @@ def validate_exchange(exchange: str) -> bool:
 
     Returns
     -------
-    True/False
+    exchange
 
     Examples
     --------
-    >>> validate_exchange('coinbase')
-    True
-    
-    >>> validate_exchange('something')
-    False
+    >>> validate_exchange('COINBASE')
+    'coinbase'
     '''
 
     if not isinstance(exchange, str):
@@ -43,7 +41,7 @@ def validate_exchange(exchange: str) -> bool:
     valid_exchanges = read_config().keys()
 
     if exchange not in valid_exchanges:
-        raise ValueError('Please provide a valid crypto exchange')
+        raise ValueError('Please provide a valid crypto exchange. Run get_valid_exchanges() for a list of supported exchanges')
 
     return exchange
 
@@ -51,7 +49,7 @@ def get_base_url(exchange: str):
     '''
     A function that returns the base api url from the config.yaml file.
     This url is used when data for all tickers is requested.
-    For example, getting all valid ticker IDs on the exchange.
+    For example, getting all ticker ids on the exchange.
 
     Parameters
     ----------

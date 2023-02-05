@@ -38,12 +38,11 @@ def get_all_tickers(exchange: str) -> pd.DataFrame:
 
     Returns
     -------
-    A list of tickers for the given exchange
+    A dataframe of tickers for the given exchange
 
     Examples
     --------
     >>> get_ticker_ids('coinbase')
-    ['1INCH-BTC', '1INCH-EUR', '1INCH-GBP', '1INCH-USD', ...]
     '''
 
     exchange = validate_exchange(exchange)
@@ -127,7 +126,7 @@ class Trades:
         --------
         >>> trades = Trades('coinbase', 'BTC-USD')
         >>> trades.get_data('2022-10-01', '2022-10-03')
-            time	low	high	open	close	volume
+            time	    low	        high	    open	    close	    volume
         0	2022-10-01	19160.00	19486.43	19423.57	19315.27	7337.455956
         1	2022-10-02	18923.81	19398.94	19315.26	19059.17	12951.424045
         2	2022-10-03	18958.29	19717.67	19059.10	19633.46	28571.640187
