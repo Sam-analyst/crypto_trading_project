@@ -1,6 +1,7 @@
 from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url
 import requests
 import pandas as pd
+from datetime import datetime, timedelta
 
 
 def get_valid_exchanges() -> list:
@@ -89,9 +90,11 @@ class Trades:
         ticker_id: str,
         start_date: str,
         end_date: str,
+        date_format: str = '%Y-%m-%d',
         start_time: str = '00:00:00',
         end_time: str = '23:59:59',
-        time_interval: str = '1_day') -> pd.DataFrame:
+        time_format: str = '%H:%M:%S',
+        time_interval: str = '1d') -> pd.DataFrame:
         '''
         A method that returns a pandas dataframe with candlestick data from the exchange.
 
@@ -103,20 +106,27 @@ class Trades:
         ticker_id: str
             The ticker id for which to pull candlestick data for.
         start_date: str
-            The start date for the trading data provided as 'YYYY-MM-DD'.
+            The start date for the trading data provided as 'YYYY-MM-DD'. Different
+            date formats can be provided by changing the date_format parameter.
         end_date: str
             The end date (inclusive) for the trading data provided as 'YYYY-MM-DD'.
+            Different date formats can be provided by changing the date_format parameter.
+        date_format: str
+            The date format code of the start/end date provided. The available format codes 
+            can be referenced in the datetime module documentation.
         start_time: str
             The start time for the trading data provided as 'HH:MM:SS'.
-            Default is '00:00:00' and is only needed when specifying
-            time intervals less than 1 day.
+            The default is '00:00:00'. Like start_date, different
+            time formats can be provided by changing the time_format parameter.
         end_time: str
             The end time for the trading data provided as 'HH:MM:SS'.
-            Default is '23:59:59' and is only needed when specifying
-            time intervals less than 1 day.
+            The default is '23:59:59'. If using the default and end date as today,
+            the record with the most recent candlestick data will be equal to the
+            current candle. Like end_date, different time formats can be provided 
+            by changing the time_format parameter.
         time_interval: str
             The time interval for the trading data. Valid arguments include:
-            '1_minute', '5_minute', '15_minute', '1_hour', '6_hour', '1_day'.
+            '1m', '5m', '15m', '1h', '6h', '1d'. Default is 1d.
 
         Returns
         -------
@@ -133,7 +143,6 @@ class Trades:
         '''
 
         #TODO need to provide support for indicators. It will ideally get added to this function since we want to pull the data once
-
         if not isinstance(ticker_id, str):
             raise TypeError('ticker_id must be a string')
 
@@ -145,35 +154,40 @@ class Trades:
 
         self.ticker_id = ticker_id
 
-        if not type(time_interval) is str:
-            raise TypeError('Please provide a string to time_interval')
-            
-        start_timestamp = start_date + ' ' + start_time
-        end_timestamp = end_date + ' ' + end_time
+        #TODO need to see if I can update this so that the format is predicted versus having to explicitly state format.
+        start_date = datetime.strptime(start_date, date_format).strftime('%Y-%m-%d')
+        start_time = datetime.strptime(start_time, time_format).strftime('%H:%M:%S')
+        start_datetime = datetime.strptime(start_date + ' ' + start_time, '%Y-%m-%d %H:%M:%S')
+        #TODO need tell datetime object that times are in utc, then need to convert to users local time
+        end_date = datetime.strptime(end_date, date_format).strftime('%Y-%m-%d')
+        end_time = datetime.strptime(end_time, time_format).strftime('%H:%M:%S')
+        end_datetime = datetime.strptime(end_date + ' ' + end_time, '%Y-%m-%d %H:%M:%S')
 
-        time_intervals = {
-            '1_minute': 60,
-            '5_minute': 300,
-            '15_minute': 900,
-            '1_hour': 3600,
-            '6_hour': 21600,
-            '1_day': 86400
+        time_interval_to_seconds = {
+            '1m': 60,
+            '5m': 300,
+            '15m': 900,
+            '1h': 3600,
+            '6h': 21600,
+            '1d': 86400
         }
 
-        if time_interval not in time_intervals.keys():
+        #TODO will need to run time delta calcs to see if num records will be greater than 300, if so, then need to run loop.
+
+        if time_interval not in time_interval_to_seconds.keys():
             msg = (
                 "Please provide a valid time interval. "
                 "Valid intervals are: "
             )
-            raise KeyError(msg + str(list(time_intervals.keys())))
+            raise KeyError(msg + str(list(time_interval_to_seconds.keys())))
 
         url = get_candlestick_url(self.exchange)
         url = url.format(ticker_id=self.ticker_id)
         
         payload = {
-            'granularity': time_intervals[time_interval],
-            'start': start_timestamp,
-            'end': end_timestamp
+            'granularity': time_interval_to_seconds[time_interval],
+            'start': start_datetime.strftime('%Y-%m-%d %H:%M:%S') ,
+            'end': end_datetime.strftime('%Y-%m-%d %H:%M:%S')
             }
 
         response = requests.get(url, params=payload)
@@ -184,7 +198,7 @@ class Trades:
         df = pd.DataFrame(data=response.json(), columns=['time', 'low', 'high', 'open', 'close', 'volume'])
 
         # converting unix time to datetime
-        df['time'] = pd.to_datetime(df['time'], unit='s') #TODO need to conver to local time of the user
+        df['time'] = pd.to_datetime(df['time'], unit='s')
 
         # sorting by time
         df.sort_values(by=['time'], inplace=True, ignore_index=True)
