@@ -1,4 +1,4 @@
-from _utils import read_config, validate_exchange, get_base_url
+from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url
 import requests
 import pandas as pd
 
@@ -94,7 +94,7 @@ class Trades:
             raise ValueError('Please provide a valid ticker id. Run get_ticker_ids() for a full list of tickers')
 
         self.exchange = exchange
-        self.ticker = ticker_id
+        self.ticker_id = ticker_id
 
     def get_data(self,
         start_date: str,
@@ -164,8 +164,8 @@ class Trades:
             )
             raise KeyError(msg + str(list(time_intervals.keys())))
 
-        base_url = get_base_url(self.exchange)
-        data_url = base_url + self.ticker + '/candles' #TODO need to obtain the url suffix from the config
+        url = get_candlestick_url(self.exchange)
+        url = url.format(ticker_id=self.ticker_id)
 
         headers = {"accept": "application/json"}
         
@@ -175,7 +175,7 @@ class Trades:
             'end': end_timestamp
             }
 
-        response = requests.get(data_url, headers=headers, params=payload)
+        response = requests.get(url, headers=headers, params=payload)
 
         df = pd.DataFrame(data=response.json(), columns=['time', 'low', 'high', 'open', 'close', 'volume'])
 

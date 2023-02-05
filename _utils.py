@@ -39,28 +39,54 @@ def validate_exchange(exchange: str) -> bool:
 
     return exchange in valid_exchanges
 
-
 def get_base_url(exchange: str):
     '''
     A function that returns the base api url from the config.yaml file.
+    This url is used when data for all tickers is requested.
+    For example, getting all valid ticker IDs on the exchange.
 
     Parameters
     ----------
     exchange : str
-        The name of the crypto exchange to get the api url for
+        The name of the crypto exchange
 
     Returns
     -------
-    A string of the base api url
+    A string of the base url
 
     Examples
     --------
-    >>> get_base_url('coinbase')
+    >>> get_api_url('coinbase')
     'https://api.exchange.coinbase.com/products/'
     '''
 
-    url = read_config()[exchange]['base_url']
+    base_url = read_config()[exchange]['base_url']
     
-    return url
+    return base_url
+
+
+def get_candlestick_url(exchange: str):
+    '''
+    A function that returns the url needed to get candlestick data
+    from the exchange.
+
+    Parameters
+    ----------
+    exchange : str
+        The name of the crypto exchange
+
+    Returns
+    -------
+    A string of the candlestick url
+
+    Examples
+    --------
+    >>> get_candlestick_url('coinbase')
+    'https://api.exchange.coinbase.com/products/{ticker_id}/candles'
+    '''
+
+    candlestick_url = read_config()[exchange]['candlestick_url']
+    
+    return candlestick_url
 
 
