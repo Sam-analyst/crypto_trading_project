@@ -79,40 +79,34 @@ class Trades:
     '''
 
     def __init__(self,
-        exchange: str,
-        ticker_id: str) -> None:
+        exchange: str
+        ) -> None:
 
-        exchange = exchange.lower() #TODO move the .lower() method to utils
-        ticker_id = ticker_id.upper() #TODO move the ticker_id parameter to the get_data method
-
-        if not validate_exchange(exchange):
-            raise ValueError('Please provide a valid crypto exchange. Run get_valid_exchanges() for a full list of exchanges')
-
-        valid_ids = get_all_tickers(exchange)['id'].values
-        if ticker_id not in valid_ids:
-            raise ValueError('Please provide a valid ticker id. Run get_ticker_ids() for a full list of tickers')
-
+        exchange = validate_exchange(exchange)
         self.exchange = exchange
-        self.ticker_id = ticker_id
+        
 
     def get_data(self,
+        ticker_id: str,
         start_date: str,
         end_date: str,
         start_time: str = '00:00:00',
         end_time: str = '23:59:59',
         time_interval: str = '1_day') -> pd.DataFrame:
         '''
-        A method that returns a pandas dataframe with trading data from the exchange.
+        A method that returns a pandas dataframe with candlestick data from the exchange.
 
         Columns include time, low, high, open, close, and volume.
         Volume is expressed as the number of coins traded.
 
         Parameters
         ----------
+        ticker_id: str
+            The ticker id for which to pull candlestick data for.
         start_date: str
-            The start date for the trading data provided as 'YYYY-MM-DD'
+            The start date for the trading data provided as 'YYYY-MM-DD'.
         end_date: str
-            The end date (inclusive) for the trading data provided as 'YYYY-MM-DD'
+            The end date (inclusive) for the trading data provided as 'YYYY-MM-DD'.
         start_time: str
             The start time for the trading data provided as 'HH:MM:SS'.
             Default is '00:00:00' and is only needed when specifying
@@ -127,7 +121,7 @@ class Trades:
 
         Returns
         -------
-        A pandas dataframe with trading data.
+        A pandas dataframe with candlestick data.
 
         Examples
         --------
@@ -140,6 +134,12 @@ class Trades:
         '''
 
         #TODO need to provide support for indicators. It will ideally get added to this function since we want to pull the data once
+
+        valid_ids = get_all_tickers(self.exchange)['id'].values
+        if ticker_id not in valid_ids:
+            raise ValueError('Please provide a valid ticker id. Run get_ticker_ids() for a full list of tickers')
+        ticker_id = ticker_id.upper()
+        self.ticker_id = ticker_id
 
         if not type(time_interval) is str:
             raise TypeError("Please provide a string to time_interval")
