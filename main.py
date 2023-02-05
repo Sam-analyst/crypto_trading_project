@@ -169,8 +169,6 @@ class Trades:
 
         url = get_candlestick_url(self.exchange)
         url = url.format(ticker_id=self.ticker_id)
-
-        headers = {"accept": "application/json"}
         
         payload = {
             'granularity': time_intervals[time_interval],
@@ -178,7 +176,10 @@ class Trades:
             'end': end_timestamp
             }
 
-        response = requests.get(url, headers=headers, params=payload)
+        response = requests.get(url, params=payload)
+
+        if response.status_code != 200:
+            raise Exception(f'Failed to retrieve data from {self.exchange} api')
 
         df = pd.DataFrame(data=response.json(), columns=['time', 'low', 'high', 'open', 'close', 'volume'])
 
