@@ -12,7 +12,7 @@ def read_config() -> dict:
     return config
 
 
-def validate_exchange(exchange: str) -> bool:
+def validate_exchange(exchange: str) -> str:
     '''
     A function that determines if the provided exchange is one of 
     the supported exchanges in this code. If so, it returns the

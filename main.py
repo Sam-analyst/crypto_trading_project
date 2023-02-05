@@ -134,14 +134,19 @@ class Trades:
 
         #TODO need to provide support for indicators. It will ideally get added to this function since we want to pull the data once
 
+        if not isinstance(ticker_id, str):
+            raise TypeError('ticker_id must be a string')
+
+        ticker_id = ticker_id.upper()
+
         valid_ids = get_all_tickers(self.exchange)['id'].values
         if ticker_id not in valid_ids:
-            raise ValueError('Please provide a valid ticker id. Run get_ticker_ids() for a full list of tickers')
-        ticker_id = ticker_id.upper()
+            raise ValueError('Please provide a valid ticker id. Run get_all_tickers() for a full list of tickers')
+
         self.ticker_id = ticker_id
 
         if not type(time_interval) is str:
-            raise TypeError("Please provide a string to time_interval")
+            raise TypeError('Please provide a string to time_interval')
             
         start_timestamp = start_date + ' ' + start_time
         end_timestamp = end_date + ' ' + end_time
