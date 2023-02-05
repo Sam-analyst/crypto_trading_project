@@ -27,11 +27,9 @@ def get_valid_exchanges() -> list:
     return list(valid_exchanges)
 
 
-def get_ticker_ids(exchange: str) -> list:
+def get_all_tickers(exchange: str) -> pd.DataFrame:
     '''
-    A function that returns a list of tickers that are available for a given exchange.
-    In other words, you'll only be able to pull data for the tickers in this list for
-    the given exchange.
+    A function that returns a dataframe of all tickers from the exchange.
 
     Parameters
     ----------
@@ -48,16 +46,16 @@ def get_ticker_ids(exchange: str) -> list:
     ['1INCH-BTC', '1INCH-EUR', '1INCH-GBP', '1INCH-USD', ...]
     '''
 
-    exchange = exchange.lower() #TODO need to add a type check before this so produced error is helpful
-
-    if not validate_exchange(exchange):
-        raise ValueError('Please provide a valid crypto exchange')
+    exchange = validate_exchange(exchange)
 
     url = get_base_url(exchange)
-    headers = {"accept": "application/json"}
-    response = requests.get(url, headers=headers)
-    tickers = [ticker['id'] for ticker in response.json()]
-    return sorted(tickers)
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f'Failed to retrieve data from {exchange} api')
+
+    df = pd.DataFrame(data=response.json())
+
+    return df
 
 
 class Trades:
@@ -90,7 +88,8 @@ class Trades:
         if not validate_exchange(exchange):
             raise ValueError('Please provide a valid crypto exchange. Run get_valid_exchanges() for a full list of exchanges')
 
-        if ticker_id not in get_ticker_ids(exchange):
+        valid_ids = get_all_tickers(exchange)['id'].values
+        if ticker_id not in valid_ids:
             raise ValueError('Please provide a valid ticker id. Run get_ticker_ids() for a full list of tickers')
 
         self.exchange = exchange

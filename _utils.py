@@ -35,9 +35,17 @@ def validate_exchange(exchange: str) -> bool:
     False
     '''
 
+    if not isinstance(exchange, str):
+        raise TypeError('Please provide a string')
+    
+    exchange = exchange.lower()
+
     valid_exchanges = read_config().keys()
 
-    return exchange in valid_exchanges
+    if exchange not in valid_exchanges:
+        raise ValueError('Please provide a valid crypto exchange')
+
+    return exchange
 
 def get_base_url(exchange: str):
     '''
