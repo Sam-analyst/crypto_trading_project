@@ -1,6 +1,7 @@
 import yaml
 from datetime import datetime
 import pytz
+import math
 
 def read_config() -> dict:
     '''
@@ -151,3 +152,46 @@ def get_datetime(date: str,
     dt = dt.strftime('%Y-%m-%d %H:%M:%S')
 
     return dt
+
+
+def get_row_count(start_datetime: str,
+                  end_datetime: str,
+                  time_interval: str,
+                  time_interval_in_seconds: int,
+                  datetime_format: str = '%Y-%m-%d %H:%M:%S',
+                  ) -> int:
+    '''
+    This function takes a start time and end time and calculated how many rows
+    would be returned from coinbase.
+    '''
+
+    # first, let's parse the given dates into datetime objects
+    start = datetime.strptime(start_datetime, datetime_format)
+    end = datetime.strptime(end_datetime, datetime_format)
+
+    # now calculating the difference in time
+    diff = end - start
+
+    # converting to seconds
+    diff_seconds = diff.total_seconds()
+
+    # dividing the difference in seconds by the interval
+    number_of_rows = diff_seconds/time_interval_in_seconds
+
+    # now making adjustments to the number_of_rows
+    if time_interval == '1d':
+        number_of_rows = math.ceil(number_of_rows)
+
+    elif time_interval == '1h' or time_interval == '6h':
+        if end.minute != 0:
+            number_of_rows = math.ceil(number_of_rows)
+        else:
+            number_of_rows = round(number_of_rows) + 1
+
+    elif time_interval == '15m' or time_interval == '5m' or time_interval == '1m':
+        if end.second != 0:
+            number_of_rows = math.ceil(number_of_rows)
+        else:
+            number_of_rows = round(number_of_rows) + 1
+
+    return number_of_rows

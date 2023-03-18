@@ -1,7 +1,6 @@
-from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url, get_datetime
+from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url, get_datetime, get_row_count
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
 import pytz
 
 
@@ -180,16 +179,18 @@ class Trades:
             )
             raise KeyError(msg + str(list(time_interval_to_seconds.keys())))
         
+        # assigning a variable for time interval in seconds
+        time_interval_in_seconds = time_interval_to_seconds[time_interval]
 
         if time_interval == '1d':
 
             start_datetime = get_datetime(date=start_date,
-                                          time=start_time,
+                                          time='00:00:00', # overriding users input for daily intervals so returned results are accurate
                                           date_format=date_format,
                                           time_format=time_format)
              
             end_datetime = get_datetime(date=end_date,
-                                        time=end_time,
+                                        time='23:59:59', # overriding users input for daily intervals so returned results are accurate
                                         date_format=date_format,
                                         time_format=time_format)
         
@@ -209,6 +210,24 @@ class Trades:
                                         convert_to_utc=True,
                                         local_timezone=local_timezone)
             
+
+        number_of_rows = get_row_count(start_datetime=start_datetime,
+                                       end_datetime=end_datetime,
+                                       time_interval=time_interval,
+                                       time_interval_in_seconds=time_interval_in_seconds
+                                       )
+        
+        # adding this logic here for now to raise issue if number of rows > 300, which is api max
+        if number_of_rows > 300:
+            msg = (
+                "The number of rows you are attempting to retrieve is more than 300,\n"
+                "which is more than the api can handle. Try shortening your timeframe."
+                )
+            raise Exception(msg)
+
+        #TODO add logic to break timeframes up into smaller chuncks if row count > 300
+        #TODO should raise error if more than 5K records are being requests
+        #TODO should add warning if more than 300 records are requested explaining we need to be careful
 
         url = get_candlestick_url(self.exchange)
         url = url.format(ticker_id=self.ticker_id)
