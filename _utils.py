@@ -1,5 +1,5 @@
 import yaml
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import math
 
@@ -195,3 +195,37 @@ def get_row_count(start_datetime: str,
             number_of_rows = round(number_of_rows) + 1
 
     return number_of_rows
+
+def create_date_ranges(start_date,
+                       final_end_date,
+                       time_interval_in_seconds,
+                       date_format='%Y-%m-%d %H:%M:%S') -> list:
+    
+    '''
+    Since the coinbase API can only handle 300 records at a time, this function
+    was created to break the time range into smaller increments so that
+    multiple requests can be made to the API.
+
+    Returns
+    -------
+    List of lists where the first value in the list is the start range and
+    the second value is the end range.
+    '''
+
+    start_date_dt = datetime.strptime(start_date, date_format)
+    final_end_date = datetime.strptime(final_end_date, date_format)
+    temp_end_date = start_date_dt + timedelta(seconds=time_interval_in_seconds * 290) # using 290 to be safe
+
+    date_ranges = []
+    date_ranges.append([start_date_dt.strftime(date_format), temp_end_date.strftime(date_format)])
+
+    while temp_end_date < final_end_date:
+        start_date_dt = temp_end_date + timedelta(seconds=time_interval_in_seconds) # new start date is the first candle after the last date range end date
+        temp_end_date = start_date_dt + timedelta(seconds=time_interval_in_seconds * 290)
+
+        if temp_end_date > final_end_date:
+            temp_end_date = final_end_date
+
+        date_ranges.append([start_date_dt.strftime(date_format), temp_end_date.strftime(date_format)])
+
+    return date_ranges

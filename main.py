@@ -1,7 +1,8 @@
-from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url, get_datetime, get_row_count
+from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url, get_datetime, get_row_count, create_date_ranges
 import requests
 import pandas as pd
 import pytz
+import time
 
 
 def get_valid_exchanges() -> list:
@@ -158,8 +159,6 @@ class Trades:
 
         self.ticker_id = ticker_id
 
-        #TODO somehow add logic to handle when someone provides a date way far out or start date super far back
-
         time_interval_to_seconds = {
             '1m': 60,
             '5m': 300,
@@ -168,9 +167,6 @@ class Trades:
             '6h': 21600,
             '1d': 86400
         }
-
-        #TODO will need to run time delta calcs to see if num records will be greater than 300, if so, then need to run loop.
-        #TODO need to add warning for user if they aren't pulling expected start date, example, if your interval is daily and start time if 01:00:00, its not going to pull the start date provided
 
         if time_interval not in time_interval_to_seconds.keys():
             msg = (
@@ -216,48 +212,55 @@ class Trades:
                                        time_interval=time_interval,
                                        time_interval_in_seconds=time_interval_in_seconds
                                        )
-        
-        # adding this logic here for now to raise issue if number of rows > 300, which is api max
-        if number_of_rows > 300:
+
+        if number_of_rows > 5000:
             msg = (
-                "The number of rows you are attempting to retrieve is more than 300,\n"
+                "The number of rows you are attempting to retrieve is more than 5000,\n"
                 "which is more than the api can handle. Try shortening your timeframe."
                 )
             raise Exception(msg)
-
-        #TODO add logic to break timeframes up into smaller chuncks if row count > 300
-        #TODO should raise error if more than 5K records are being requests
-        #TODO should add warning if more than 300 records are requested explaining we need to be careful
-
+        
+        date_ranges = create_date_ranges(start_date=start_datetime,
+                                         final_end_date=end_datetime,
+                                         time_interval_in_seconds=time_interval_in_seconds
+                                         )
+        
         url = get_candlestick_url(self.exchange)
         url = url.format(ticker_id=self.ticker_id)
         
-        #TODO add capability to pull more than 300 candles but no more than 10K - if over 10k, raise warning saying to chunk it up.
+        list_of_dataframes = []
+        for range in date_ranges:
 
-        payload = {
-            'granularity': time_interval_to_seconds[time_interval],
-            'start': start_datetime,
-            'end': end_datetime
-            }
+            payload = {
+                'granularity': time_interval_in_seconds,
+                'start': range[0],
+                'end': range[1]
+                }
 
-        response = requests.get(url, params=payload)
+            response = requests.get(url, params=payload)
 
-        if response.status_code != 200:
-            raise Exception(f'Failed to retrieve data from {self.exchange} api')
+            if response.status_code != 200:
+                raise Exception(f'Failed to retrieve data from {self.exchange} api')
 
-        self.df = pd.DataFrame(data=response.json(), columns=['time', 'low', 'high', 'open', 'close', 'volume'])
+            df = pd.DataFrame(data=response.json(), columns=['time', 'low', 'high', 'open', 'close', 'volume'])
 
-        # converting unix time to datetime
-        self.df['time'] = pd.to_datetime(self.df['time'], unit='s', utc=True)
+            # converting unix time to datetime
+            df['time'] = pd.to_datetime(df['time'], unit='s', utc=True)
 
-        if time_interval != '1d':
-            # converting utc to local_timezone
-            self.df['time'] = self.df['time'].dt.tz_convert(pytz.timezone(local_timezone))
+            if time_interval != '1d':
+                # converting utc to local_timezone
+                df['time'] = df['time'].dt.tz_convert(pytz.timezone(local_timezone))
+
+            list_of_dataframes.append(df)
+
+            time.sleep(1)
+
+        df = pd.concat(list_of_dataframes, ignore_index=True)
 
         # sorting by time
-        self.df.sort_values(by=['time'], inplace=True, ignore_index=True)
+        df.sort_values(by=['time'], inplace=True, ignore_index=True)
 
-        return self.df
+        return df
 
 
         
