@@ -1,3 +1,10 @@
 coinbase:
   base_url: https://api.exchange.coinbase.com/products/
   candlestick_url: https://api.exchange.coinbase.com/products/{ticker_id}/candles
+  time_intervals:
+    1m: 60
+    5m: 300
+    15m: 900
+    1h: 3600
+    6h: 21600
+    1d: 86400
