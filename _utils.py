@@ -1,5 +1,7 @@
-import yaml
 from datetime import datetime, timedelta
+import pandas as pd
+import requests
+import yaml
 import pytz
 import math
 
@@ -47,6 +49,7 @@ def validate_exchange(exchange: str) -> str:
         raise ValueError('Please provide a valid crypto exchange. Run get_valid_exchanges() for a list of supported exchanges')
 
     return exchange
+
 
 def get_base_url(exchange: str):
     '''
@@ -229,3 +232,19 @@ def create_date_ranges(start_date,
         date_ranges.append([start_date_dt.strftime(date_format), temp_end_date.strftime(date_format)])
 
     return date_ranges
+
+def get_requests(url: str,
+                 payload: dict = None,
+                 columns: list = None) -> pd.DataFrame:
+    '''
+    A function to handle getting reponses from the exchange api
+    '''
+
+    response = requests.get(url, params=payload)
+
+    if response.status_code != 200:
+        raise Exception(f'Failed to retrieve data from the api')
+
+    df = pd.DataFrame(data=response.json(), columns=columns)
+
+    return df

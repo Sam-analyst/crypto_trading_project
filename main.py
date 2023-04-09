@@ -1,4 +1,4 @@
-from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url, get_datetime, get_row_count, create_date_ranges
+from _utils import read_config, validate_exchange, get_base_url, get_candlestick_url, get_datetime, get_row_count, create_date_ranges, get_requests
 import requests
 import pandas as pd
 import pytz
@@ -8,7 +8,7 @@ import time
 def get_valid_exchanges() -> list:
     '''
     A function that returns a list of crypto exchanges that are supported by this code.
-    In other words, you can pull trading data for only the exchanges that are in this list.
+    In other words, you can only pull candlestick data for the exchanges that are in this list.
 
     Parameters
     ----------
@@ -24,37 +24,43 @@ def get_valid_exchanges() -> list:
     ['coinbase']
     '''
 
-    valid_exchanges = read_config().keys()
+    # read_config() reads the config.yaml file and returns it as a dictionary
+    valid_exchanges = read_config().keys() # getting the keys since these are the exchanges
 
     return list(valid_exchanges)
 
 
-def get_all_tickers(exchange: str) -> pd.DataFrame:
+def get_trading_pairs(exchange: str) -> pd.DataFrame:
     '''
-    A function that returns a dataframe of all tickers from the exchange.
+    A function that returns a dataframe containing all trading pairs from the exchange.
+    One thing to be aware is that not all trading pairs returned from the exchange
+    are active. Review the 'status' column to determine which trading pairs are active.
 
     Parameters
     ----------
     exchange : str
-        The name of the crypto exchange to get tickers for
+        The name of the crypto exchange to get trading pairs for
 
     Returns
     -------
-    A dataframe of tickers for the given exchange
+    A dataframe of trading pairs for the given exchange
 
     Examples
     --------
     >>> get_ticker_ids('coinbase')
     '''
 
+    # validating the exchange - will raise an error if exchange not found
     exchange = validate_exchange(exchange)
 
+    # gets the base url from the exchange
     url = get_base_url(exchange)
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise Exception(f'Failed to retrieve data from {exchange} api')
 
-    df = pd.DataFrame(data=response.json())
+    # sends the request to the url
+    df = get_requests(url=url)
+
+    # sorting by id
+    df = df.sort_values('id', ignore_index=True)
 
     return df
 
@@ -152,7 +158,7 @@ class Trades:
 
         ticker_id = ticker_id.upper()
 
-        valid_ids = get_all_tickers(self.exchange)['id'].values
+        valid_ids = get_trading_pairs(self.exchange)['id'].values
         
         if ticker_id not in valid_ids:
             raise ValueError('Please provide a valid ticker id. Run get_all_tickers() for a full list of tickers')
@@ -262,5 +268,8 @@ class Trades:
 
         return df
 
-
+#TODO change _utils import to import everything and then just use _utils.function
+#TODO need to add comments in code
+#TODO identify areas to reduce redundency
+#TODO add docstrings to every function
         
