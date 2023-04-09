@@ -198,8 +198,8 @@ def get_row_count(start_datetime: datetime,
 
     return number_of_rows
 
-def get_date_ranges(start_date_dt,
-                    final_end_date,
+def get_date_ranges(start_datetime,
+                    final_end_datetime,
                     time_interval_in_seconds
                     ) -> list:
     
@@ -214,22 +214,31 @@ def get_date_ranges(start_date_dt,
     the second value is the end range.
     '''
 
-    temp_end_date = start_date_dt + timedelta(seconds=time_interval_in_seconds * 290) # using 290 to be safe
+    temp_end_datetime = start_datetime + timedelta(seconds=time_interval_in_seconds * 290) # using 290 to be safe
 
     date_ranges = []
-    if temp_end_date >= final_end_date:
-        date_ranges.append([start_date_dt, final_end_date])
-    else:
-        date_ranges.append([start_date_dt, temp_end_date])
 
-    while temp_end_date < final_end_date:
-        start_date_dt = temp_end_date + timedelta(seconds=time_interval_in_seconds) # new start date is the first candle after the last date range end date
-        temp_end_date = start_date_dt + timedelta(seconds=time_interval_in_seconds * 290)
+    # if the temp_end_datetime is greater than or equal to the final_end_datetime, that means the number of rows
+    # being requested is less than or equal to 290 so we can just return the original datetimes provided
+    if temp_end_datetime >= final_end_datetime:
+        date_ranges.append([start_datetime, final_end_datetime])
+        return date_ranges
+    
+    # if final_end_datetime is larger than temp, that means we need to create smaller chunks
+    # to begin, let's append the start_datetime and temp_end_datetime
+    date_ranges.append([start_datetime, temp_end_datetime])
 
-        if temp_end_date > final_end_date:
-            temp_end_date = final_end_date
+    # we're gonna keep creating date ranges until the temp end date is past the final end date
+    while temp_end_datetime < final_end_datetime:
+        start_datetime = temp_end_datetime + timedelta(seconds=time_interval_in_seconds) # new start date is the first candle after the last date range end date
+        temp_end_datetime = start_datetime + timedelta(seconds=time_interval_in_seconds * 290)
 
-        date_ranges.append([start_date_dt, temp_end_date])
+        # the last loop while likely result in a temp end date past the final end date, when this occurs,
+        # set the temp_end_date as the final_end_datetime, which will break the while loop and be our last date range
+        if temp_end_datetime > final_end_datetime:
+            temp_end_datetime = final_end_datetime
+
+        date_ranges.append([start_datetime, temp_end_datetime])
 
     return date_ranges
 

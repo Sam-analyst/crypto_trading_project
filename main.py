@@ -132,7 +132,7 @@ class Candles:
     2	2023-01-03	16666.86	16772.30	16600.00	16669.47	17612.355277
 
     >>> btc_hourly = Candles(exchange='coinbase',
-                            ticker_id'=BTC-USD',
+                            ticker_id='BTC-USD',
                             start_date='2023-01-01',
                             end_date='2023-01-01',
                             start_time='12:00:00',
@@ -246,8 +246,8 @@ class Candles:
         # now that's out of the way, a list of date ranges can be made, which is what
         # the below function does
         date_ranges = get_date_ranges(
-            start_date_dt=self.start_datetime,
-            final_end_date=self.end_datetime,
+            start_datetime=self.start_datetime,
+            final_end_datetime=self.end_datetime,
             time_interval_in_seconds=time_interval_in_seconds
         )
         
@@ -306,7 +306,6 @@ class Candles:
         self.df = df
 
 
-
-#TODO identify areas to reduce redundency
-#TODO add docstrings to every function
-        
+#TODO improve get_date_ranges function
+#TODO set up doctests
+#TODO add indicator methods 
