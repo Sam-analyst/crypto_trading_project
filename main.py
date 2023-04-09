@@ -126,7 +126,7 @@ class Candles:
                             start_date='2023-01-01',
                             end_date='2023-01-03')
     >>> btc_daily.df
-        date	open	high	low	close	volume
+        date	    open	    high	    low	        close	    volume
     0	2023-01-01	16531.83	16621.00	16490.00	16611.58	10668.736977
     1	2023-01-02	16611.90	16789.99	16542.52	16666.95	13560.460180
     2	2023-01-03	16666.86	16772.30	16600.00	16669.47	17612.355277
@@ -139,7 +139,7 @@ class Candles:
                             end_time='14:00:00',
                             time_interval='1h')
     >>> btc_hourly.df
-            date	start_time	open	high	low	close	volume
+        date	    start_time  open	    high	    low	        close	    volume
     0	2023-01-01	12:00:00	16556.33	16588.88	16554.60	16571.10	454.654269
     1	2023-01-01	13:00:00	16571.10	16595.62	16571.09	16583.74	313.306362
     2	2023-01-01	14:00:00	16583.70	16615.89	16583.69	16596.48	461.018155
@@ -308,4 +308,5 @@ class Candles:
 
 #TODO improve get_date_ranges function
 #TODO set up doctests
-#TODO add indicator methods 
+#TODO add indicator methods
+#TODO figure out how to make docstring dataframe column headers centered
