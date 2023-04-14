@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
 import pandas as pd
+import os
 import requests
 import yaml
 import math
+
 
 def read_config() -> dict:
     '''
@@ -10,7 +12,12 @@ def read_config() -> dict:
     and returns the contents as a nested dictionary.
     '''
 
-    with open('config.yaml', 'r') as f:
+    # getting the current path
+    path = os.path.dirname(os.path.abspath(__file__))
+
+    config_path = os.path.join(path, 'config.yaml')
+
+    with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
     
     return config

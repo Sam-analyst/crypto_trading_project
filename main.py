@@ -5,6 +5,21 @@ from datetime import datetime
 import pytz
 import time
 
+import os
+import sys
+
+# to get the _utils import to work if user is calling from a different directory,
+# we need to add the directory of this script to sys.path so python knows
+# where to look - adding a . at the beginning of _utils import resulted in
+# an error if the user was in the same directory. The following adjustments
+# should work whether the user is in this directory or not.
+
+# getting the direcotry of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# append script_dir to sys.path
+sys.path.append(script_dir)
+
 from _utils import (
     read_config,
     validate_exchange,
@@ -305,7 +320,8 @@ class Candles:
 
         self.df = df
 
-
+#TODO add readme to github and edit description in github
+#TODO create example notebook
 #TODO improve get_date_ranges function
 #TODO set up doctests
 #TODO add indicator methods
