@@ -320,8 +320,6 @@ class Candles:
 
         self.df = df
 
-#TODO add readme to github and edit description in github
-#TODO create example notebook
 #TODO improve get_date_ranges function
 #TODO set up doctests
 #TODO add indicator methods
